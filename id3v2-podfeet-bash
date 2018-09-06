@@ -1,0 +1,59 @@
+# Add /usr/local/bin to PATH
+export PATH=$PATH:/usr/local/bin
+
+# This script will add a set of ID3 tags and album artwork to your podcast file. I have tested it with audio but not video files.  It uses the spec from id3.org and the library id3v2 from Myer's Carpenter at https://github.com/myers/id3v2 (available via homebrew).
+# The script will entitle your podcast episode with the name of the input file without extension.  
+
+#=== Please edit the following variables ===#
+
+# Path to album artwork file name with extension
+aaw="/Users/allison/podfeet/NosillaCast/NosillaCast Audio/CCATP_AUDIO_2018/ccatp-logo.png"
+
+# Your website URL
+url=https://podfeet.com
+
+# Podcaster's Name
+name="Allison Sheridan"
+
+# Podcast Title
+podt="Chit Chat Across the Pond"
+
+# Year
+year="2018"
+
+# Copyright
+copy="Creative Commons Share and Share Alike no commercial use with attribution"
+
+# Genre
+genre="podcast"
+
+#=== DO NOT EDIT BELOW THIS LINE! ===#
+
+# f is the full file name including path
+f="$1"
+
+# fn is the file name with extension but no path
+fn=$(basename "$f")
+
+# fns is the short file name, with no extension, no path
+fns=${fn%.*}
+
+# dir is the full path to the input file
+dir=$(dirname "$f")/
+
+# Add album artwork with ffmpeg
+# ffmpeg cannot edit the file in place, so an intermediate file called deleteme.mp3 will be created. That file will disappear after the move command
+
+ffmpeg -i "$f" -i "$aaw" -map 0:0 -map 1:0 -c copy -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" "$dir"deleteme.mp3
+
+# Copy file with artwork back onto the original
+
+/bin/mv "$dir"deleteme.mp3 "$f"
+
+id3v2 --WPUB "$url" "$f"
+id3v2 --TIT2 "$fns" "$f"
+id3v2 --TPE1 "$name" "$f"
+id3v2 --TALB "$podt" "$f"
+id3v2 --TCON "$genre" "$f"
+id3v2 --TCOP "$copy" "$f"
+id3v2 --TYER "$year" "$f"
